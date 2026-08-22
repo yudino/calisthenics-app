@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Pecs 20min</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pecs 20min">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1115">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff6b4a'/%3E%3Ctext x='50' y='64' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%F0%9F%92%AA%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0f1115; --card:#1a1d24; --card2:#20242c;
+    --text:#f2f3f5; --sub:#9aa3b2; --accent:#ff6b4a; --accent2:#4ade80;
+    --line:#2a2f3a; --blue:#5ac8ff; --purple:#c084fc;
+  }
+  body.light{
+    --bg:#f4f5f7; --card:#ffffff; --card2:#eef0f3;
+    --text:#14161a; --sub:#6b7280; --accent:#ff6b4a; --accent2:#1f9d54;
+    --line:#e2e5ea; --blue:#0d7fc4; --purple:#8b3fd6;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; background:var(--bg); color:var(--text); height:100%;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    overscroll-behavior:none; transition:background .2s, color .2s;
+  }
+  body{ padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 20px); }
+  .screen{display:none; padding-top:14px; animation:fade .2s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0;} to{opacity:1;}}
+
+  h1{font-size:20px; margin:4px 0 2px;}
+  .subtitle{color:var(--sub); font-size:13px; margin-bottom:14px;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px;}
+  .card h3{margin:0 0 8px; font-size:14px;}
+
+  /* HOME */
+  .next-card{
+    background:linear-gradient(135deg,#2a1f1c,#1a1d24); border:1px solid #3a2a22;
+    border-radius:18px; padding:16px; margin-bottom:14px;
+  }
+  .next-label{font-size:11px; color:#ffb199; font-weight:700; letter-spacing:.05em; text-transform:uppercase;}
+  .next-title{font-size:20px; font-weight:800; margin:4px 0 2px; color:#f5ece9;}
+  .next-sub{font-size:12.5px; color:#c9beb8; margin-bottom:12px;}
+  .btn{
+    display:block; width:100%; text-align:center; padding:14px; border-radius:14px;
+    border:none; font-size:15px; font-weight:700; cursor:pointer;
+  }
+  .btn-primary{background:var(--accent); color:#1a0f0a;}
+  .btn-secondary{background:var(--card2); color:var(--text); border:1px solid var(--line);}
+  .btn-ghost{background:transparent; color:var(--sub); border:1px solid var(--line);}
+  .row-btns{display:flex; gap:8px;}
+  .row-btns .btn{flex:1;}
+
+  .phase-select{display:flex; gap:8px; margin-bottom:10px; overflow-x:auto;}
+  .chip{
+    flex:0 0 auto; padding:7px 12px; border-radius:20px; background:var(--card2);
+    color:var(--sub); font-size:12.5px; font-weight:600; border:1px solid var(--line); cursor:pointer;
+  }
+  .chip.active{background:var(--accent); color:#1a0f0a; border-color:var(--accent);}
+
+  .session-select{display:flex; gap:8px; margin-bottom:4px;}
+  .session-chip{
+    flex:1; text-align:center; padding:10px; border-radius:12px; background:var(--card2);
+    color:var(--sub); font-size:13px; font-weight:700; border:1px solid var(--line); cursor:pointer;
+  }
+  .session-chip.active{border-color:var(--accent); color:var(--accent); background:#241a17;}
+
+  .week-strip{display:flex; gap:6px; margin-top:8px;}
+  .day-dot{
+    flex:1; height:34px; border-radius:8px; background:var(--card2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--sub); font-weight:700;
+  }
+  .day-dot.done{background:#1a3a24; border-color:#2a5a34; color:var(--accent2);}
+  .day-dot.today{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; padding:10px 2px;}
+  .toggle-row .lbl{font-size:13px;}
+  .toggle-row .sub{font-size:11px; color:var(--sub);}
+  .switch{
+    width:44px; height:26px; background:var(--card2); border:1px solid var(--line); border-radius:20px;
+    position:relative; cursor:pointer; flex:0 0 44px;
+  }
+  .switch.on{background:var(--accent);}
+  .switch .knob{
+    position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%;
+    background:#fff; transition:left .15s;
+  }
+  .switch.on .knob{left:20px;}
+
+  .stat-row{display:flex; gap:8px;}
+  .stat{flex:1; background:var(--card2); border-radius:12px; padding:10px; text-align:center;}
+  .stat .n{font-size:18px; font-weight:800;}
+  .stat .l{font-size:10.5px; color:var(--sub);}
+
+  /* SESSION */
+  .session-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .stopwatch{font-size:28px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .session-tag{font-size:12px; color:var(--sub);}
+  .exit-btn{background:var(--card2); border:1px solid var(--line); color:var(--sub); border-radius:10px; padding:8px 12px; font-size:12px;}
+
+  .progress-track{height:6px; background:var(--card2); border-radius:6px; overflow:hidden; margin-bottom:16px;}
+  .progress-fill{height:100%; background:var(--accent); transition:width .3s;}
+
+  .superset-label{font-size:12px; color:var(--accent); font-weight:700; text-align:center; margin-bottom:4px;}
+  .round-dots{display:flex; gap:6px; justify-content:center; margin-bottom:14px;}
+  .rdot{width:10px; height:10px; border-radius:50%; background:var(--card2); border:1px solid var(--line);}
+  .rdot.done{background:var(--accent); border-color:var(--accent);}
+  .rdot.current{background:transparent; border:2px solid var(--accent);}
+
+  .exo-big{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px 18px; text-align:center; margin-bottom:14px;}
+  .exo-big .tag{
+    display:inline-block; font-size:11px; padding:3px 10px; border-radius:8px; font-weight:800;
+    background:#3a1f1a; color:var(--accent); margin-bottom:10px;
+  }
+  .exo-big .tag.pull{background:#1a2e3a; color:var(--blue);}
+  .exo-big .tag.legs{background:#1a3a24; color:var(--accent2);}
+  .exo-big .tag.core{background:#2a1a3a; color:var(--purple);}
+  .exo-big .tag.iso{background:#3a1f1a; color:#ffb199;}
+  .exo-big .name{font-size:19px; font-weight:800; margin-bottom:8px;}
+  .exo-big .meta{font-size:14px; color:var(--sub); margin-bottom:4px;}
+  .exo-big .meta b{color:var(--text);}
+  .exo-big .note{font-size:12px; color:var(--sub); margin-top:10px; line-height:1.4;}
+
+  .rest-big{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px 18px; text-align:center; margin-bottom:14px;}
+  .rest-ring{width:140px; height:140px; margin:0 auto 14px; position:relative;}
+  .rest-ring svg{transform:rotate(-90deg);}
+  .rest-num{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:800;}
+  .rest-label{font-size:13px; color:var(--sub); margin-bottom:2px;}
+  .up-next{font-size:12.5px; color:var(--sub); margin-top:8px;}
+  .up-next b{color:var(--text);}
+
+  /* SUMMARY */
+  .summary-hero{text-align:center; padding:20px 0;}
+  .summary-hero .big{font-size:40px;}
+  .summary-hero .dur{font-size:32px; font-weight:800; margin-top:8px;}
+  .summary-hero .lbl{font-size:12px; color:var(--sub);}
+
+  .install-box{
+    background:var(--card2); border:1px dashed var(--line); border-radius:14px; padding:12px 14px;
+    font-size:12px; color:var(--sub); line-height:1.5; margin-bottom:14px;
+  }
+  .install-box b{color:var(--text);}
+
+  .home-head{display:flex; justify-content:space-between; align-items:flex-start;}
+  .theme-toggle{
+    flex:0 0 auto; width:40px; height:40px; border-radius:12px; background:var(--card2);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:18px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<div class="screen active" id="screen-home">
+  <div class="home-head">
+    <div>
+      <h1>💪 Pecs 20min</h1>
+      <div class="subtitle">Programme minimaliste · anneaux + barre + élastique</div>
+    </div>
+    <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">🌙</div>
+  </div>
+
+  <div class="next-card">
+    <div class="next-label" id="home-phase-label">Phase 1 · semaines 1–4</div>
+    <div class="next-title" id="home-next-title">Séance A</div>
+    <div class="next-sub" id="home-next-sub">Pectoraux horizontal · pousser + tirer + jambes + gainage</div>
+    <button class="btn btn-primary" onclick="startSession()">▶ Démarrer la séance</button>
+  </div>
+
+  <div class="card">
+    <h3>Cette semaine</h3>
+    <div class="week-strip" id="week-strip"></div>
+  </div>
+
+  <div class="card">
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="stat-total">0</div><div class="l">séances au total</div></div>
+      <div class="stat"><div class="n" id="stat-streak">0</div><div class="l">cette semaine</div></div>
+      <div class="stat"><div class="n" id="stat-avg">–</div><div class="l">durée moy.</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Choisir manuellement</h3>
+    <div class="phase-select" id="phase-select"></div>
+    <div class="session-select" id="session-select"></div>
+  </div>
+
+  <div class="card">
+    <div class="toggle-row">
+      <div>
+        <div class="lbl">⏱️ Mode pressé aujourd'hui</div>
+        <div class="sub">Réduit le superset jambes/gainage à 2 tours</div>
+      </div>
+      <div class="switch" id="rush-switch" onclick="toggleRush()"><div class="knob"></div></div>
+    </div>
+  </div>
+
+  <div class="install-box">
+    📲 <b>Ajouter à l'écran d'accueil :</b> ouvre ce fichier dans Safari ou Chrome, puis menu Partager → « Sur l'écran d'accueil ». L'app s'ouvre ensuite en plein écran, sans connexion nécessaire (tout est sauvegardé sur ton téléphone).
+  </div>
+</div>
+
+<!-- ============ SESSION ============ -->
+<div class="screen" id="screen-session">
+  <div class="session-head">
+    <div>
+      <div class="stopwatch" id="sw-display">00:00</div>
+      <div class="session-tag" id="session-tag">Séance A · Phase 1</div>
+    </div>
+    <button class="exit-btn" onclick="exitSession()">Quitter</button>
+  </div>
+
+  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <div id="session-body"></div>
+</div>
+
+<!-- ============ SUMMARY ============ -->
+<div class="screen" id="screen-summary">
+  <div class="card summary-hero">
+    <div class="big">🎉</div>
+    <div class="dur" id="summary-duration">00:00</div>
+    <div class="lbl">Séance terminée</div>
+  </div>
+  <div class="card">
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="summary-session">A</div><div class="l">séance</div></div>
+      <div class="stat"><div class="n" id="summary-total">0</div><div class="l">au total</div></div>
+      <div class="stat"><div class="n" id="summary-week">0</div><div class="l">cette semaine</div></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="goHome()">Retour à l'accueil</button>
+</div>
+
+<script>
+/* ============ DONNÉES DU PROGRAMME ============ */
+const PROGRAM = {
+  1: { label:"Phase 1 · semaines 1–4",
+    A: { title:"Séance A", sub:"Pectoraux horizontal · pousser + tirer + jambes + gainage",
+      supersets:[
+        { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
+          {code:"A1", cat:"push", name:"Pompes aux anneaux", sets:"4", reps:"6–12", tempo:"3-0-1 · RIR 1–2", note:"Anneaux ~15–20cm du sol, coudes semi-serrés, descente 3s."},
+          {code:"A2", cat:"pull", name:"Tirage aux anneaux (ring rows)", sets:"4", reps:"8–12", tempo:"2-0-1 · RIR 2", note:"Corps incliné, poitrine vers les anneaux, omoplates serrées."}
+        ]},
+        { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
+          {code:"B1", cat:"legs", name:"Squat bulgare + élastique", sets:"3", reps:"8–12/jambe", tempo:"2-0-1 · RIR 2", note:"Pied arrière surélevé, élastique sous le pied avant."},
+          {code:"B2", cat:"core", name:"Hollow hold", sets:"3", reps:"max propre", tempo:"", note:"Bas du dos plaqué au sol, bras/jambes tendus."}
+        ]}
+      ]},
+    B: { title:"Séance B", sub:"Angles & amplitude · dips + tirage vertical + haut pectoral",
+      supersets:[
+        { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
+          {code:"A1", cat:"push", name:"Dips aux anneaux", sets:"4", reps:"5–10", tempo:"3-0-1 · RIR 1–2", note:"Progression : assisté → négatives → support hold → complet."},
+          {code:"A2", cat:"pull", name:"Tractions assistées élastique", sets:"4", reps:"selon niveau", tempo:"négatives 2-0-3", note:"Bande sur la barre, pied ou genou dans la boucle."}
+        ]},
+        { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
+          {code:"B1", cat:"push", name:"Pompes pieds surélevés", sets:"3", reps:"6–10", tempo:"3-0-1 · RIR 2", note:"Pieds sur chaise/anneau bas, cible le haut du pectoral."},
+          {code:"B2", cat:"core", name:"Relevés de jambes à la barre", sets:"3", reps:"max propre", tempo:"", note:"Suspendu, jambes tendues ou pliées."}
+        ]}
+      ]}
+  },
+  2: { label:"Phase 2 · semaines 5–8",
+    A: { title:"Séance A renforcée", sub:"Même structure, charge augmentée",
+      supersets:[
+        { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
+          {code:"A1", cat:"push", name:"Pompes anneaux lestées (élastique)", sets:"4", reps:"6–10", tempo:"3-0-1 · RIR 1–2", note:"Bande dans le haut du dos, extrémités sous les mains."},
+          {code:"A2", cat:"pull", name:"Ring rows pieds surélevés", sets:"4", reps:"8–12", tempo:"2-0-1 · RIR 2", note:""}
+        ]},
+        { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
+          {code:"B1", cat:"legs", name:"Squat bulgare + élastique (tension ↑)", sets:"3", reps:"8–12/jambe", tempo:"RIR 2", note:""},
+          {code:"B2", cat:"core", name:"Hollow hold + rocks", sets:"3", reps:"max propre", tempo:"", note:""}
+        ]}
+      ]},
+    B: { title:"Séance B renforcée", sub:"Dips turn out + déficit",
+      supersets:[
+        { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
+          {code:"A1", cat:"push", name:"Dips aux anneaux (turn out)", sets:"4", reps:"6–10", tempo:"3-0-1 · RIR 1–2", note:"Rotation externe des anneaux en haut."},
+          {code:"A2", cat:"pull", name:"Tractions (moins d'assistance)", sets:"4", reps:"selon niveau", tempo:"négatives 4-5s", note:""}
+        ]},
+        { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
+          {code:"B1", cat:"push", name:"Pompes déficit aux anneaux", sets:"3", reps:"6–10", tempo:"3-0-1 · RIR 2", note:"Mains sur anneaux surélevés, poitrine descend sous les mains."},
+          {code:"B2", cat:"core", name:"Relevés de jambes à la barre", sets:"3", reps:"max propre", tempo:"", note:""}
+        ]}
+      ]}
+  },
+  3: { label:"Phase 3 · semaines 9–12",
+    A: { title:"Séance A avancée", sub:"+ écartés aux anneaux",
+      supersets:[
+        { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
+          {code:"A1", cat:"push", name:"Pompes anneaux lestées (charge ↑)", sets:"4", reps:"6–10", tempo:"3-0-1 · RIR 1", note:""},
+          {code:"A2", cat:"pull", name:"Ring rows lestés / archer", sets:"4", reps:"8–12", tempo:"RIR 2", note:""}
+        ]},
+        { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
+          {code:"B1", cat:"iso", name:"Écartés aux anneaux (ring flyes)", sets:"3", reps:"8–12", tempo:"3-0-1 · RIR 2", note:"Bras quasi tendus. Prudence coiffe des rotateurs."},
+          {code:"B2", cat:"legs", name:"Pistol assisté / squat bulgare lesté", sets:"3", reps:"8–12/jambe", tempo:"RIR 2", note:""}
+        ]}
+      ]},
+    B: { title:"Séance B avancée", sub:"Dips lestés + pseudo-planche",
+      supersets:[
+        { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
+          {code:"A1", cat:"push", name:"Dips turn out + élastique", sets:"4", reps:"6–10", tempo:"3-0-1 · RIR 1", note:""},
+          {code:"A2", cat:"pull", name:"Tractions complètes / lestées", sets:"4", reps:"max ou +charge", tempo:"RIR 2", note:""}
+        ]},
+        { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
+          {code:"B1", cat:"push", name:"Pseudo-planche pompes", sets:"3", reps:"5–8", tempo:"3-0-1 · RIR 2", note:"Mains proches du bassin, buste penché en avant."},
+          {code:"B2", cat:"core", name:"Hollow hold avancé", sets:"3", reps:"max propre", tempo:"", note:""}
+        ]}
+      ]}
+  }
+};
+
+/* ============ ÉTAT / STOCKAGE ============ */
+const STORE_KEY = 'pecs20-v1';
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { history: [], phase: 1, rush:false };
+}
+function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+let store = loadStore();
+if(!store.history) store.history = [];
+if(!store.phase) store.phase = 1;
+if(!store.theme) store.theme = 'dark';
+
+/* ============ THEME ============ */
+function applyTheme(){
+  document.body.classList.toggle('light', store.theme === 'light');
+  const btn = document.getElementById('theme-toggle');
+  if(btn) btn.textContent = store.theme === 'light' ? '☀️' : '🌙';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', store.theme === 'light' ? '#f4f5f7' : '#0f1115');
+}
+function toggleTheme(){
+  store.theme = store.theme === 'light' ? 'dark' : 'light';
+  saveStore();
+  applyTheme();
+}
+applyTheme();
+
+function lastSession(){
+  if(store.history.length === 0) return null;
+  return store.history[store.history.length-1];
+}
+function suggestedSession(){
+  const last = lastSession();
+  if(!last) return 'A';
+  return last.session === 'A' ? 'B' : 'A';
+}
+function isoWeekStart(d){
+  const date = new Date(d);
+  const day = (date.getDay()+6)%7; // lundi=0
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate()-day);
+  return date;
+}
+function thisWeekSessions(){
+  const start = isoWeekStart(new Date()).getTime();
+  return store.history.filter(h => h.date >= start);
+}
+
+let selectedPhase = store.phase;
+let selectedSession = suggestedSession();
+
+/* ============ HOME RENDER ============ */
+function renderHome(){
+  document.getElementById('home-phase-label').textContent = PROGRAM[selectedPhase].label;
+  const sess = PROGRAM[selectedPhase][selectedSession];
+  document.getElementById('home-next-title').textContent = sess.title;
+  document.getElementById('home-next-sub').textContent = sess.sub;
+
+  // phase chips
+  const ps = document.getElementById('phase-select');
+  ps.innerHTML = '';
+  [1,2,3].forEach(p=>{
+    const c = document.createElement('div');
+    c.className = 'chip' + (p===selectedPhase?' active':'');
+    c.textContent = 'Phase ' + p;
+    c.onclick = ()=>{ selectedPhase = p; store.phase = p; saveStore(); renderHome(); };
+    ps.appendChild(c);
+  });
+
+  // session chips
+  const ss = document.getElementById('session-select');
+  ss.innerHTML = '';
+  ['A','B'].forEach(s=>{
+    const c = document.createElement('div');
+    c.className = 'session-chip' + (s===selectedSession?' active':'');
+    c.textContent = 'Séance ' + s;
+    c.onclick = ()=>{ selectedSession = s; renderHome(); };
+    ss.appendChild(c);
+  });
+
+  // week strip
+  const ws = document.getElementById('week-strip');
+  ws.innerHTML = '';
+  const labels = ['L','M','M','J','V','S','D'];
+  const start = isoWeekStart(new Date());
+  const weekSess = thisWeekSessions();
+  const todayStr = new Date().toDateString();
+  for(let i=0;i<7;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const dot = document.createElement('div');
+    let cls = 'day-dot';
+    const done = weekSess.find(h => new Date(h.date).toDateString() === d.toDateString());
+    if(done) cls += ' done';
+    if(d.toDateString() === todayStr) cls += ' today';
+    dot.className = cls;
+    dot.textContent = done ? '✓' : labels[i];
+    ws.appendChild(dot);
+  }
+
+  // stats
+  document.getElementById('stat-total').textContent = store.history.length;
+  document.getElementById('stat-streak').textContent = weekSess.length;
+  if(store.history.length){
+    const avg = Math.round(store.history.reduce((a,h)=>a+h.duration,0)/store.history.length/60);
+    document.getElementById('stat-avg').textContent = avg + 'm';
+  } else {
+    document.getElementById('stat-avg').textContent = '–';
+  }
+
+  // rush switch
+  document.getElementById('rush-switch').classList.toggle('on', !!store.rush);
+}
+function toggleRush(){
+  store.rush = !store.rush;
+  saveStore();
+  renderHome();
+}
+
+/* ============ NAVIGATION ============ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){
+  selectedSession = suggestedSession();
+  renderHome();
+  showScreen('screen-home');
+}
+
+/* ============ SESSION RUNTIME ============ */
+let steps = [];
+let stepIndex = 0;
+let swInterval = null;
+let swSeconds = 0;
+let restInterval = null;
+let sessionPhase, sessionKey;
+
+function buildSteps(phase, sessionKey_){
+  const data = PROGRAM[phase][sessionKey_];
+  const arr = [];
+  data.supersets.forEach((ss, ssIdx)=>{
+    let rounds = ss.rounds;
+    if(ss.reducible && store.rush) rounds = Math.min(rounds, 2);
+    for(let r=1; r<=rounds; r++){
+      ss.exercises.forEach(ex=>{
+        arr.push({ type:'exercise', ssIdx, ssTag:ss.tag, round:r, totalRounds:rounds, ex });
+      });
+      // rest after round, except after the very last round of the last superset
+      const isLastRound = (r === rounds);
+      const isLastSuperset = (ssIdx === data.supersets.length - 1);
+      if(!(isLastRound && isLastSuperset)){
+        arr.push({ type:'rest', ssIdx, ssTag:ss.tag, round:r, totalRounds:rounds, seconds:60,
+          nextLabel: isLastRound ? (data.supersets[ssIdx+1].tag) : ss.tag });
+      }
+    }
+  });
+  return arr;
+}
+
+function startSession(){
+  sessionPhase = selectedPhase;
+  sessionKey = selectedSession;
+  steps = buildSteps(sessionPhase, sessionKey);
+  stepIndex = 0;
+  swSeconds = 0;
+  document.getElementById('session-tag').textContent =
+    PROGRAM[sessionPhase][sessionKey].title + ' · Phase ' + sessionPhase;
+  showScreen('screen-session');
+  renderStep();
+  startStopwatch();
+}
+
+function startStopwatch(){
+  clearInterval(swInterval);
+  swInterval = setInterval(()=>{
+    swSeconds++;
+    document.getElementById('sw-display').textContent = fmtTime(swSeconds);
+  }, 1000);
+}
+function fmtTime(sec){
+  const m = Math.floor(sec/60).toString().padStart(2,'0');
+  const s = (sec%60).toString().padStart(2,'0');
+  return m+':'+s;
+}
+
+function catLabel(cat){
+  return {push:'POUSSER', pull:'TIRER', legs:'JAMBES', core:'GAINAGE', iso:'ISOLATION'}[cat] || cat.toUpperCase();
+}
+function catClass(cat){
+  return {push:'', pull:'pull', legs:'legs', core:'core', iso:'iso'}[cat] || '';
+}
+
+function renderStep(){
+  const total = steps.length;
+  document.getElementById('progress-fill').style.width = Math.round((stepIndex/total)*100) + '%';
+  const step = steps[stepIndex];
+  const body = document.getElementById('session-body');
+
+  if(step.type === 'exercise'){
+    body.innerHTML = `
+      <div class="superset-label">${step.ssTag} · tour ${step.round}/${step.totalRounds}</div>
+      <div class="round-dots">${dotsHtml(step.totalRounds, step.round)}</div>
+      <div class="exo-big">
+        <div class="tag ${catClass(step.ex.cat)}">${catLabel(step.ex.cat)} · ${step.ex.code}</div>
+        <div class="name">${step.ex.name}</div>
+        <div class="meta"><b>${step.ex.sets} séries</b> × <b>${step.ex.reps}</b> reps</div>
+        ${step.ex.tempo ? `<div class="meta">${step.ex.tempo}</div>` : ''}
+        ${step.ex.note ? `<div class="note">${step.ex.note}</div>` : ''}
+      </div>
+      <button class="btn btn-primary" onclick="nextStep()">✓ Fait — tour suivant</button>
+    `;
+  } else {
+    // rest step
+    startRestTimer(step.seconds);
+    body.innerHTML = `
+      <div class="rest-big">
+        <div class="rest-label">Repos</div>
+        <div class="rest-ring">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="62" stroke="#2a2f3a" stroke-width="8" fill="none"/>
+            <circle id="rest-circle" cx="70" cy="70" r="62" stroke="#ff6b4a" stroke-width="8" fill="none"
+              stroke-linecap="round" stroke-dasharray="${2*Math.PI*62}" stroke-dashoffset="0"/>
+          </svg>
+          <div class="rest-num" id="rest-num">${step.seconds}</div>
+        </div>
+        <div class="up-next">Suivant : <b>${step.nextLabel}</b></div>
+      </div>
+      <button class="btn btn-secondary" onclick="skipRest()">Passer le repos</button>
+    `;
+  }
+}
+function dotsHtml(total, current){
+  let html = '';
+  for(let i=1;i<=total;i++){
+    let cls = 'rdot';
+    if(i < current) cls += ' done';
+    if(i === current) cls += ' current';
+    html += `<div class="${cls}"></div>`;
+  }
+  return html;
+}
+
+function startRestTimer(seconds){
+  clearInterval(restInterval);
+  let remaining = seconds;
+  const circumference = 2*Math.PI*62;
+  const numEl = ()=>document.getElementById('rest-num');
+  const circleEl = ()=>document.getElementById('rest-circle');
+  restInterval = setInterval(()=>{
+    remaining--;
+    if(numEl()) numEl().textContent = Math.max(remaining,0);
+    if(circleEl()){
+      const offset = circumference * (1 - remaining/seconds);
+      circleEl().style.strokeDashoffset = offset;
+    }
+    if(remaining <= 0){
+      clearInterval(restInterval);
+      nextStep();
+    }
+  }, 1000);
+}
+function skipRest(){
+  clearInterval(restInterval);
+  nextStep();
+}
+function nextStep(){
+  clearInterval(restInterval);
+  stepIndex++;
+  if(stepIndex >= steps.length){
+    finishSession();
+  } else {
+    renderStep();
+  }
+}
+function exitSession(){
+  clearInterval(swInterval);
+  clearInterval(restInterval);
+  goHome();
+}
+function finishSession(){
+  clearInterval(swInterval);
+  clearInterval(restInterval);
+  store.history.push({ date: Date.now(), session: sessionKey, phase: sessionPhase, duration: swSeconds });
+  saveStore();
+
+  document.getElementById('summary-duration').textContent = fmtTime(swSeconds);
+  document.getElementById('summary-session').textContent = sessionKey;
+  document.getElementById('summary-total').textContent = store.history.length;
+  document.getElementById('summary-week').textContent = thisWeekSessions().length;
+  showScreen('screen-summary');
+}
+
+/* ============ INIT ============ */
+renderHome();
+</script>
+</body>
+</html>
