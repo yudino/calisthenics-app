@@ -603,21 +603,20 @@ function goHome(){
 let steps = [];
 let stepIndex = 0;
 let swInterval = null;
-let swSeconds = 0;
 let restInterval = null;
-let sessionPhase, sessionKey;
+let swTick = null, restTick = null;
+let sessionPhase, sessionKey, sessionStartTs;
 
-function buildSteps(phase, sessionKey_){
+function buildSteps(phase, sessionKey_, rushFlag){
   const data = PROGRAM[phase][sessionKey_];
   const arr = [];
   data.supersets.forEach((ss, ssIdx)=>{
     let rounds = ss.rounds;
-    if(ss.reducible && store.rush) rounds = Math.min(rounds, 2);
+    if(ss.reducible && rushFlag) rounds = Math.min(rounds, 2);
     for(let r=1; r<=rounds; r++){
       ss.exercises.forEach(ex=>{
         arr.push({ type:'exercise', ssIdx, ssTag:ss.tag, round:r, totalRounds:rounds, ex });
       });
-      // rest after round, except after the very last round of the last superset
       const isLastRound = (r === rounds);
       const isLastSuperset = (ssIdx === data.supersets.length - 1);
       if(!(isLastRound && isLastSuperset)){
@@ -629,25 +628,59 @@ function buildSteps(phase, sessionKey_){
   return arr;
 }
 
+function saveActive(){
+  saveStore();
+}
+
 function startSession(){
+  if(store.active){
+    const ok = confirm('Une séance est déjà en cours (Séance ' + store.active.sessionKey + '). Démarrer une nouvelle séance va l\'abandonner. Continuer ?');
+    if(!ok) return;
+  }
   sessionPhase = selectedPhase;
   sessionKey = selectedSession;
-  steps = buildSteps(sessionPhase, sessionKey);
+  sessionStartTs = Date.now();
+  steps = buildSteps(sessionPhase, sessionKey, store.rush);
   stepIndex = 0;
-  swSeconds = 0;
+  store.active = { phase:sessionPhase, sessionKey, stepIndex:0, sessionStartTs, restEndTs:null, rush:!!store.rush };
+  saveActive();
   document.getElementById('session-tag').textContent =
     PROGRAM[sessionPhase][sessionKey].title + ' · Phase ' + sessionPhase;
   showScreen('screen-session');
   renderStep();
-  startStopwatch();
+  startStopwatch(sessionStartTs);
 }
 
-function startStopwatch(){
+function resumeSession(){
+  const a = store.active;
+  if(!a) return;
+  sessionPhase = a.phase;
+  sessionKey = a.sessionKey;
+  sessionStartTs = a.sessionStartTs;
+  steps = buildSteps(sessionPhase, sessionKey, a.rush);
+  stepIndex = Math.min(a.stepIndex, steps.length - 1);
+  document.getElementById('session-tag').textContent =
+    PROGRAM[sessionPhase][sessionKey].title + ' · Phase ' + sessionPhase;
+  showScreen('screen-session');
+  renderStep(a.restEndTs);
+  startStopwatch(sessionStartTs);
+}
+
+function abandonSession(){
+  store.active = null;
+  saveActive();
+  renderHome();
+}
+
+function startStopwatch(startTs){
   clearInterval(swInterval);
-  swInterval = setInterval(()=>{
-    swSeconds++;
-    document.getElementById('sw-display').textContent = fmtTime(swSeconds);
-  }, 1000);
+  const tick = ()=>{
+    const elapsed = Math.floor((Date.now() - startTs)/1000);
+    document.getElementById('sw-display').textContent = fmtTime(elapsed);
+  };
+  swTick = tick;
+  tick();
+  swInterval = setInterval(tick, 1000);
 }
 function fmtTime(sec){
   const m = Math.floor(sec/60).toString().padStart(2,'0');
@@ -662,11 +695,17 @@ function catClass(cat){
   return {push:'', pull:'pull', legs:'legs', core:'core', iso:'iso'}[cat] || '';
 }
 
-function renderStep(){
+function renderStep(resumeRestEndTs){
   const total = steps.length;
   document.getElementById('progress-fill').style.width = Math.round((stepIndex/total)*100) + '%';
   const step = steps[stepIndex];
   const body = document.getElementById('session-body');
+
+  if(store.active){
+    store.active.stepIndex = stepIndex;
+    store.active.restEndTs = (step.type === 'rest') ? (resumeRestEndTs || (Date.now() + step.seconds*1000)) : null;
+    saveActive();
+  }
 
   if(step.type === 'exercise'){
     body.innerHTML = `
@@ -682,8 +721,8 @@ function renderStep(){
       <button class="btn btn-primary" onclick="nextStep()">✓ Fait — tour suivant</button>
     `;
   } else {
-    // rest step
-    startRestTimer(step.seconds);
+    const endTs = store.active ? store.active.restEndTs : (Date.now() + step.seconds*1000);
+    startRestTimer(step.seconds, endTs);
     body.innerHTML = `
       <div class="rest-big">
         <div class="rest-label">Repos</div>
@@ -712,15 +751,14 @@ function dotsHtml(total, current){
   return html;
 }
 
-function startRestTimer(seconds){
+function startRestTimer(seconds, endTs){
   clearInterval(restInterval);
-  let remaining = seconds;
   const circumference = 2*Math.PI*62;
   const numEl = ()=>document.getElementById('rest-num');
   const circleEl = ()=>document.getElementById('rest-circle');
-  restInterval = setInterval(()=>{
-    remaining--;
-    if(numEl()) numEl().textContent = Math.max(remaining,0);
+  const tick = ()=>{
+    const remaining = Math.max(0, Math.round((endTs - Date.now())/1000));
+    if(numEl()) numEl().textContent = remaining;
     if(circleEl()){
       const offset = circumference * (1 - remaining/seconds);
       circleEl().style.strokeDashoffset = offset;
@@ -729,7 +767,10 @@ function startRestTimer(seconds){
       clearInterval(restInterval);
       nextStep();
     }
-  }, 1000);
+  };
+  restTick = tick;
+  tick();
+  restInterval = setInterval(tick, 1000);
 }
 function skipRest(){
   clearInterval(restInterval);
@@ -745,17 +786,23 @@ function nextStep(){
   }
 }
 function exitSession(){
+  const ok = confirm('Quitter la séance en cours ? Ta progression sera perdue.');
+  if(!ok) return;
   clearInterval(swInterval);
   clearInterval(restInterval);
+  store.active = null;
+  saveActive();
   goHome();
 }
 function finishSession(){
   clearInterval(swInterval);
   clearInterval(restInterval);
-  store.history.push({ date: Date.now(), session: sessionKey, phase: sessionPhase, duration: swSeconds });
+  const duration = Math.floor((Date.now() - sessionStartTs)/1000);
+  store.history.push({ date: Date.now(), session: sessionKey, phase: sessionPhase, duration });
+  store.active = null;
   saveStore();
 
-  document.getElementById('summary-duration').textContent = fmtTime(swSeconds);
+  document.getElementById('summary-duration').textContent = fmtTime(duration);
   document.getElementById('summary-session').textContent = sessionKey;
   document.getElementById('summary-total').textContent = store.history.length;
   document.getElementById('summary-week').textContent = thisWeekSessions().length + '/' + store.frequency;
@@ -764,6 +811,16 @@ function finishSession(){
 
 /* ============ INIT ============ */
 renderHome();
+if(store.active){
+  resumeSession();
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    if(swTick) swTick();
+    if(restTick) restTick();
+  }
+});
 </script>
 </body>
 </html>
