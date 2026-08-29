@@ -53,6 +53,7 @@
   .btn-primary{background:var(--accent); color:#1a0f0a;}
   .btn-secondary{background:var(--card2); color:var(--text); border:1px solid var(--line);}
   .btn-ghost{background:transparent; color:var(--sub); border:1px solid var(--line);}
+  .btn-ghost-dark{background:transparent; color:#e8b3a4; border:1px solid #4a3630;}
   .row-btns{display:flex; gap:8px;}
   .row-btns .btn{flex:1;}
 
@@ -179,6 +180,37 @@
   .history-dur{font-size:13px; font-weight:700; color:var(--sub);}
   .history-empty{text-align:center; color:var(--sub); font-size:13px; padding:30px 0;}
 
+  .preview-superset{
+    border:1px dashed var(--line); border-radius:14px; padding:10px 10px 4px; margin-bottom:12px;
+  }
+  .preview-superset-tag{font-size:11px; color:var(--accent); font-weight:700; text-align:center; margin-bottom:8px;}
+  .preview-exo{
+    background:var(--card2); border-radius:12px; padding:10px; margin-bottom:8px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .preview-code{
+    flex:0 0 26px; width:26px; height:26px; border-radius:8px;
+    background:var(--card); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; color:var(--accent);
+  }
+  .preview-info{flex:1; min-width:0;}
+  .preview-name{font-size:13.5px; font-weight:700; margin-bottom:2px;}
+  .preview-tag{
+    display:inline-block; font-size:9.5px; padding:1px 6px; border-radius:6px;
+    background:#3a1f1a; color:var(--accent); margin-bottom:3px; font-weight:700;
+  }
+  .preview-tag.pull{background:#1a2e3a; color:var(--blue);}
+  .preview-tag.legs{background:#1a3a24; color:var(--accent2);}
+  .preview-tag.core{background:#2a1a3a; color:var(--purple);}
+  .preview-tag.iso{background:#3a1f1a; color:#ffb199;}
+  .preview-meta{font-size:11.5px; color:var(--sub); line-height:1.4;}
+  .preview-meta b{color:var(--text);}
+  .preview-rounds{
+    text-align:center; font-size:11px; color:var(--text); margin:4px 0 2px;
+    background:var(--card); border-radius:8px; padding:6px 8px;
+  }
+
   .home-head{display:flex; justify-content:space-between; align-items:flex-start;}
   .theme-toggle{
     flex:0 0 auto; width:40px; height:40px; border-radius:12px; background:var(--card2);
@@ -206,6 +238,7 @@
     <div class="next-title" id="home-next-title">Séance A</div>
     <div class="next-sub" id="home-next-sub">Pectoraux horizontal · pousser + tirer + jambes + gainage</div>
     <button class="btn btn-primary" onclick="startSession()">▶ Démarrer la séance</button>
+    <button class="btn btn-ghost-dark" style="margin-top:8px;" onclick="openPreview()">👁 Voir le détail complet</button>
   </div>
 
   <div class="history-link" onclick="openHistory()">
@@ -290,6 +323,15 @@
   <h1>Historique</h1>
   <div class="subtitle">Toutes tes séances enregistrées</div>
   <div id="history-list"></div>
+</div>
+
+<!-- ============ PREVIEW ============ -->
+<div class="screen" id="screen-preview">
+  <div class="back-btn" onclick="goHome()">‹ Retour</div>
+  <h1 id="preview-title">Séance A</h1>
+  <div class="subtitle" id="preview-sub">Pectoraux horizontal</div>
+  <div id="preview-body"></div>
+  <button class="btn btn-primary" onclick="startSession()">▶ Démarrer cette séance</button>
 </div>
 
 <script>
@@ -588,7 +630,38 @@ function openHistory(){
   showScreen('screen-history');
 }
 
-/* ============ NAVIGATION ============ */
+/* ============ APERÇU COMPLET ============ */
+function openPreview(){
+  const data = PROGRAM[selectedPhase][selectedSession];
+  document.getElementById('preview-title').textContent = data.title;
+  document.getElementById('preview-sub').textContent = data.sub + ' · Phase ' + selectedPhase;
+
+  const body = document.getElementById('preview-body');
+  body.innerHTML = data.supersets.map(ss=>{
+    let rounds = ss.rounds;
+    if(ss.reducible && store.rush) rounds = Math.min(rounds, 2);
+    const exosHtml = ss.exercises.map(ex=>`
+      <div class="preview-exo">
+        <div class="preview-code">${ex.code}</div>
+        <div class="preview-info">
+          <span class="preview-tag ${catClass(ex.cat)}">${catLabel(ex.cat)}</span>
+          <div class="preview-name">${ex.name}</div>
+          <div class="preview-meta"><b>${ex.sets} séries</b> × <b>${ex.reps}</b> reps${ex.tempo ? ' · ' + ex.tempo : ''}</div>
+          ${ex.note ? `<div class="preview-meta">${ex.note}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+    return `
+      <div class="preview-superset">
+        <div class="preview-superset-tag">${ss.tag}</div>
+        ${exosHtml}
+        <div class="preview-rounds">↻ ${ss.exercises.map(e=>e.code).join(' → ')} sans repos = 1 tour · <b>${rounds} tours</b> au total</div>
+      </div>
+    `;
+  }).join('');
+
+  showScreen('screen-preview');
+}
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
