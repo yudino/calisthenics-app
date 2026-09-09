@@ -54,6 +54,23 @@
   .btn-secondary{background:var(--card2); color:var(--text); border:1px solid var(--line);}
   .btn-ghost{background:transparent; color:var(--sub); border:1px solid var(--line);}
   .btn-ghost-dark{background:transparent; color:#e8b3a4; border:1px solid #4a3630;}
+
+  .rotation-strip{display:flex; align-items:center; justify-content:center; gap:6px; margin:10px 0 14px;}
+  .rot-dot{
+    width:32px; height:32px; border-radius:10px; background:#12151a; border:1px solid #3a2a22;
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#6b5a52;
+  }
+  .rot-dot.done{background:#2a1f1c; color:#8a6a5c;}
+  .rot-dot.next{background:var(--accent); color:#1a0f0a; border-color:var(--accent); transform:scale(1.1);}
+  .rot-arrow{color:#4a3630; font-size:12px;}
+
+  .manual-toggle{
+    text-align:center; font-size:12.5px; color:var(--sub); padding:10px; cursor:pointer; margin-bottom:4px;
+  }
+  .manual-warning{
+    background:#3a1f1a; border:1px solid #5a2f24; color:#ffb199; border-radius:10px;
+    padding:8px 10px; font-size:12px; margin-bottom:10px; line-height:1.4;
+  }
   .row-btns{display:flex; gap:8px;}
   .row-btns .btn{flex:1;}
 
@@ -178,6 +195,10 @@
   .history-date{font-size:13.5px; font-weight:700;}
   .history-meta{font-size:11.5px; color:var(--sub); margin-top:1px;}
   .history-dur{font-size:13px; font-weight:700; color:var(--sub);}
+  .history-del{
+    flex:0 0 28px; width:28px; height:28px; border-radius:8px; background:var(--card2);
+    color:var(--sub); display:flex; align-items:center; justify-content:center; font-size:13px; margin-left:4px;
+  }
   .history-empty{text-align:center; color:var(--sub); font-size:13px; padding:30px 0;}
 
   .preview-superset{
@@ -236,7 +257,8 @@
   <div class="next-card">
     <div class="next-label" id="home-phase-label">Phase 1 · semaines 1–4</div>
     <div class="next-title" id="home-next-title">Séance A</div>
-    <div class="next-sub" id="home-next-sub">Pectoraux horizontal · pousser + tirer + jambes + gainage</div>
+    <div class="next-sub" id="home-next-sub">Pectoraux horizontal · pousser + tirer + jambes</div>
+    <div class="rotation-strip" id="rotation-strip"></div>
     <button class="btn btn-primary" onclick="startSession()">▶ Démarrer la séance</button>
     <button class="btn btn-ghost-dark" style="margin-top:8px;" onclick="openPreview()">👁 Voir le détail complet</button>
   </div>
@@ -264,17 +286,20 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="manual-toggle" id="manual-toggle" onclick="toggleManual()">🔧 Changer manuellement la séance</div>
+  <div class="card" id="manual-card" style="display:none;">
+    <div class="manual-warning" id="manual-warning" style="display:none;"></div>
     <h3>Choisir manuellement</h3>
     <div class="phase-select" id="phase-select"></div>
     <div class="session-select" id="session-select"></div>
+    <div class="btn btn-ghost-dark" style="margin-top:10px; padding:8px;" onclick="resetToSuggestion()">↺ Revenir à la suggestion</div>
   </div>
 
   <div class="card">
     <div class="toggle-row">
       <div>
         <div class="lbl">⏱️ Mode pressé aujourd'hui</div>
-        <div class="sub">Réduit le superset jambes/gainage à 2 tours</div>
+        <div class="sub">Réduit le 2ème superset (jambes) à 2 tours</div>
       </div>
       <div class="switch" id="rush-switch" onclick="toggleRush()"><div class="knob"></div></div>
     </div>
@@ -338,18 +363,18 @@
 /* ============ DONNÉES DU PROGRAMME ============ */
 const PROGRAM = {
   1: { label:"Phase 1 · semaines 1–4",
-    A: { title:"Séance A", sub:"Pectoraux horizontal · pousser + tirer + jambes + gainage",
+    A: { title:"Séance A", sub:"Pectoraux horizontal · pousser + tirer + jambes (bilatéral)",
       supersets:[
         { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
           {code:"A1", cat:"push", name:"Pompes aux anneaux", sets:"4", reps:"6–12", tempo:"3-0-1 · RIR 1–2", note:"Anneaux ~15–20cm du sol, coudes semi-serrés, descente 3s."},
           {code:"A2", cat:"pull", name:"Tirage aux anneaux (ring rows)", sets:"4", reps:"8–12", tempo:"2-0-1 · RIR 2", note:"Corps incliné, poitrine vers les anneaux, omoplates serrées."}
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
-          {code:"B1", cat:"legs", name:"Squat bulgare + élastique", sets:"3", reps:"8–12/jambe", tempo:"2-0-1 · RIR 2", note:"Pied arrière surélevé, élastique sous le pied avant."},
-          {code:"B2", cat:"core", name:"Hollow hold", sets:"3", reps:"max propre", tempo:"", note:"Bas du dos plaqué au sol, bras/jambes tendus."}
+          {code:"B1", cat:"legs", name:"Squat à l'élastique", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Bande sous les deux pieds, tenue aux épaules ou en gobelet. Les 2 jambes ensemble, quadriceps/fessiers."},
+          {code:"B2", cat:"legs", name:"Hip thrust à l'élastique", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Dos calé contre un support bas, bande sur les hanches. Fessiers/ischio-jambiers, les 2 jambes ensemble."}
         ]}
       ]},
-    B: { title:"Séance B", sub:"Angles & amplitude · dips + tirage vertical + haut pectoral",
+    B: { title:"Séance B", sub:"Angles & amplitude · dips + tirage vertical + jambes",
       supersets:[
         { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
           {code:"A1", cat:"push", name:"Dips aux anneaux", sets:"4", reps:"5–10", tempo:"3-0-1 · RIR 1–2", note:"Progression : assisté → négatives → support hold → complet."},
@@ -357,18 +382,18 @@ const PROGRAM = {
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
           {code:"B1", cat:"push", name:"Pompes pieds surélevés", sets:"3", reps:"6–10", tempo:"3-0-1 · RIR 2", note:"Pieds sur chaise/anneau bas, cible le haut du pectoral."},
-          {code:"B2", cat:"core", name:"Relevés de jambes à la barre", sets:"3", reps:"max propre", tempo:"", note:"Suspendu, jambes tendues ou pliées."}
+          {code:"B2", cat:"legs", name:"Squat à l'élastique", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Bande sous les deux pieds, tenue aux épaules. Les 2 jambes ensemble."}
         ]}
       ]},
-    C: { title:"Séance C", sub:"Épaules & équilibre · presse épaules + rear delt + jambes + gainage rotatif",
+    C: { title:"Séance C", sub:"Épaules & équilibre · presse épaules + rear delt + jambes explosif",
       supersets:[
         { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
           {code:"A1", cat:"push", name:"Pike push-up (pompes piquées)", sets:"4", reps:"6–10", tempo:"3-0-1 · RIR 1–2", note:"Bassin haut, mains au sol, cible les épaules. Pieds surélevés = plus dur."},
           {code:"A2", cat:"pull", name:"Face pull à l'élastique", sets:"4", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Bande à hauteur de visage, tirer vers le front, coudes hauts (arrière d'épaule)."}
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
-          {code:"B1", cat:"legs", name:"Fentes arrière + élastique", sets:"3", reps:"8–12/jambe", tempo:"2-0-1 · RIR 2", note:"Élastique sous le pied avant, tenu aux épaules."},
-          {code:"B2", cat:"core", name:"Pallof press à l'élastique", sets:"3", reps:"10–12/côté", tempo:"", note:"Anti-rotation : pousser devant soi sans que le buste tourne."}
+          {code:"B1", cat:"legs", name:"Squat sauté à l'élastique", sets:"3", reps:"10–12", tempo:"explosif · RIR 2", note:"Même position que le squat élastique, on saute en extension. Atterrissage souple, 2 jambes ensemble."},
+          {code:"B2", cat:"legs", name:"Hip thrust à l'élastique", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Dos calé contre un support bas, bande sur les hanches. Fessiers/ischio-jambiers."}
         ]}
       ]}
   },
@@ -380,8 +405,8 @@ const PROGRAM = {
           {code:"A2", cat:"pull", name:"Ring rows pieds surélevés", sets:"4", reps:"8–12", tempo:"2-0-1 · RIR 2", note:""}
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
-          {code:"B1", cat:"legs", name:"Squat bulgare + élastique (tension ↑)", sets:"3", reps:"8–12/jambe", tempo:"RIR 2", note:""},
-          {code:"B2", cat:"core", name:"Hollow hold + rocks", sets:"3", reps:"max propre", tempo:"", note:""}
+          {code:"B1", cat:"legs", name:"Squat à l'élastique (tension ↑)", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Les 2 jambes ensemble, quadriceps/fessiers."},
+          {code:"B2", cat:"legs", name:"Hip thrust à l'élastique (tension ↑)", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Fessiers/ischio-jambiers, les 2 jambes ensemble."}
         ]}
       ]},
     B: { title:"Séance B renforcée", sub:"Dips turn out + déficit",
@@ -392,7 +417,7 @@ const PROGRAM = {
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
           {code:"B1", cat:"push", name:"Pompes déficit aux anneaux", sets:"3", reps:"6–10", tempo:"3-0-1 · RIR 2", note:"Mains sur anneaux surélevés, poitrine descend sous les mains."},
-          {code:"B2", cat:"core", name:"Relevés de jambes à la barre", sets:"3", reps:"max propre", tempo:"", note:""}
+          {code:"B2", cat:"legs", name:"Squat à l'élastique (tension ↑)", sets:"3", reps:"12–15", tempo:"2-0-1 · RIR 2", note:"Les 2 jambes ensemble."}
         ]}
       ]},
     C: { title:"Séance C renforcée", sub:"Épaules & équilibre · charge augmentée",
@@ -402,8 +427,8 @@ const PROGRAM = {
           {code:"A2", cat:"pull", name:"Face pull à l'élastique (tension ↑)", sets:"4", reps:"12–15", tempo:"2-0-1 · RIR 2", note:""}
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
-          {code:"B1", cat:"legs", name:"Fentes arrière + élastique (tension ↑)", sets:"3", reps:"8–12/jambe", tempo:"RIR 2", note:""},
-          {code:"B2", cat:"core", name:"Pallof press (tenue + longue)", sets:"3", reps:"10–12/côté", tempo:"", note:""}
+          {code:"B1", cat:"legs", name:"Squat sauté à l'élastique", sets:"3", reps:"10–12", tempo:"explosif · RIR 2", note:"2 jambes ensemble, atterrissage souple."},
+          {code:"B2", cat:"legs", name:"Hip thrust à l'élastique (pause 2s)", sets:"3", reps:"12–15", tempo:"pause 2s en haut · RIR 2", note:""}
         ]}
       ]}
   },
@@ -416,7 +441,7 @@ const PROGRAM = {
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
           {code:"B1", cat:"iso", name:"Écartés aux anneaux (ring flyes)", sets:"3", reps:"8–12", tempo:"3-0-1 · RIR 2", note:"Bras quasi tendus. Prudence coiffe des rotateurs."},
-          {code:"B2", cat:"legs", name:"Pistol assisté / squat bulgare lesté", sets:"3", reps:"8–12/jambe", tempo:"RIR 2", note:""}
+          {code:"B2", cat:"legs", name:"Squat à l'élastique lesté", sets:"3", reps:"10–15", tempo:"2-0-1 · RIR 1–2", note:"Bande plus forte ou double épaisseur. 2 jambes ensemble."}
         ]}
       ]},
     B: { title:"Séance B avancée", sub:"Dips lestés + pseudo-planche",
@@ -427,18 +452,18 @@ const PROGRAM = {
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
           {code:"B1", cat:"push", name:"Pseudo-planche pompes", sets:"3", reps:"5–8", tempo:"3-0-1 · RIR 2", note:"Mains proches du bassin, buste penché en avant."},
-          {code:"B2", cat:"core", name:"Hollow hold avancé", sets:"3", reps:"max propre", tempo:"", note:""}
+          {code:"B2", cat:"legs", name:"Hip thrust à l'élastique lesté", sets:"3", reps:"10–15", tempo:"2-0-1 · RIR 1–2", note:"Bande plus forte. Fessiers/ischio-jambiers, 2 jambes ensemble."}
         ]}
       ]},
-    C: { title:"Séance C avancée", sub:"Épaules & équilibre · pike pieds surélevés + unilatéral",
+    C: { title:"Séance C avancée", sub:"Épaules & équilibre · pike déficit + jambes explosif",
       supersets:[
         { tag:"SUPERSET 1", rounds:4, reducible:false, exercises:[
           {code:"A1", cat:"push", name:"Pike push-up déficit (mains surélevées)", sets:"4", reps:"6–10", tempo:"3-0-1 · RIR 1", note:"Se rapproche du handstand push-up progressif."},
-          {code:"A2", cat:"pull", name:"Face pull unilatéral à l'élastique", sets:"4", reps:"10–12/bras", tempo:"2-0-1 · RIR 2", note:""}
+          {code:"A2", cat:"pull", name:"Face pull à l'élastique (tenue + lente)", sets:"4", reps:"12–15", tempo:"3-0-1 · RIR 2", note:""}
         ]},
         { tag:"SUPERSET 2", rounds:3, reducible:true, exercises:[
-          {code:"B1", cat:"legs", name:"Pistol assisté (jambe unique)", sets:"3", reps:"6–10/jambe", tempo:"RIR 2", note:""},
-          {code:"B2", cat:"core", name:"Pallof press unilatéral en fente", sets:"3", reps:"10–12/côté", tempo:"", note:""}
+          {code:"B1", cat:"legs", name:"Squat sauté à l'élastique lesté", sets:"3", reps:"10–12", tempo:"explosif · RIR 1–2", note:"2 jambes ensemble, bande plus forte."},
+          {code:"B2", cat:"legs", name:"Hip thrust à l'élastique (tempo lent)", sets:"3", reps:"10–15", tempo:"3-0-1 · RIR 2", note:""}
         ]}
       ]}
   }
@@ -507,6 +532,28 @@ function renderHome(){
   const sess = PROGRAM[selectedPhase][selectedSession];
   document.getElementById('home-next-title').textContent = sess.title;
   document.getElementById('home-next-sub').textContent = sess.sub;
+
+  // bande de rotation A → B → C
+  const suggested = suggestedSession();
+  const rotStrip = document.getElementById('rotation-strip');
+  const seq = ['A','B','C'];
+  const lastDone = lastSession();
+  rotStrip.innerHTML = seq.map((s,i)=>{
+    let cls = 'rot-dot';
+    if(s === suggested) cls += ' next';
+    else if(lastDone && s === lastDone.session) cls += ' done';
+    const arrow = i < seq.length-1 ? '<span class="rot-arrow">→</span>' : '';
+    return `<div class="${cls}">${s}</div>${arrow}`;
+  }).join('');
+
+  // avertissement si sélection manuelle ≠ suggestion
+  const warn = document.getElementById('manual-warning');
+  if(selectedSession !== suggested){
+    warn.style.display = 'block';
+    warn.innerHTML = `⚠️ Ceci sort de l'ordre recommandé. Suggestion actuelle : <b>Séance ${suggested}</b>.`;
+  } else {
+    warn.style.display = 'none';
+  }
 
   // phase chips
   const ps = document.getElementById('phase-select');
@@ -599,6 +646,15 @@ function toggleRush(){
   saveStore();
   renderHome();
 }
+function toggleManual(){
+  const card = document.getElementById('manual-card');
+  const isHidden = card.style.display === 'none';
+  card.style.display = isHidden ? 'block' : 'none';
+}
+function resetToSuggestion(){
+  selectedSession = suggestedSession();
+  renderHome();
+}
 
 /* ============ HISTORIQUE ============ */
 function fmtDate(ts){
@@ -616,6 +672,7 @@ function openHistory(){
     list.innerHTML = sorted.map(h=>{
       const min = Math.floor(h.duration/60);
       const sec = (h.duration%60).toString().padStart(2,'0');
+      const realIdx = store.history.indexOf(h);
       return `
         <div class="history-item">
           <div class="history-badge">${h.session}</div>
@@ -624,10 +681,19 @@ function openHistory(){
             <div class="history-meta">Phase ${h.phase} · Séance ${h.session}</div>
           </div>
           <div class="history-dur">${min}:${sec}</div>
+          <div class="history-del" onclick="deleteHistoryEntry(${realIdx})">✕</div>
         </div>`;
     }).join('');
   }
   showScreen('screen-history');
+}
+function deleteHistoryEntry(idx){
+  const ok = confirm('Supprimer cette séance de l\'historique ?');
+  if(!ok) return;
+  store.history.splice(idx, 1);
+  saveStore();
+  openHistory();
+  renderHome();
 }
 
 /* ============ APERÇU COMPLET ============ */
@@ -871,7 +937,13 @@ function finishSession(){
   clearInterval(swInterval);
   clearInterval(restInterval);
   const duration = Math.floor((Date.now() - sessionStartTs)/1000);
-  store.history.push({ date: Date.now(), session: sessionKey, phase: sessionPhase, duration });
+  // relit le store au cas où un autre onglet aurait déjà écrit (évite les doublons)
+  store = loadStore();
+  if(!store.history) store.history = [];
+  const already = store.history.some(h => h.startTs === sessionStartTs);
+  if(!already){
+    store.history.push({ date: Date.now(), startTs: sessionStartTs, session: sessionKey, phase: sessionPhase, duration });
+  }
   store.active = null;
   saveStore();
 
