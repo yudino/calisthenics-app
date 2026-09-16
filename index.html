@@ -502,14 +502,23 @@ applyTheme();
 
 function lastSession(){
   if(store.history.length === 0) return null;
-  return store.history[store.history.length-1];
+  return [...store.history].sort((a,b)=>b.date-a.date)[0];
 }
 function suggestedSession(){
-  const last = lastSession();
   const seq = ['A','B','C'];
-  if(!last) return 'A';
-  const idx = seq.indexOf(last.session);
-  return seq[(idx+1) % seq.length];
+  const counts = {A:0, B:0, C:0};
+  const lastDate = {A:0, B:0, C:0};
+  store.history.forEach(h=>{
+    if(counts[h.session] === undefined) return;
+    counts[h.session]++;
+    if(h.date > lastDate[h.session]) lastDate[h.session] = h.date;
+  });
+  const minCount = Math.min(counts.A, counts.B, counts.C);
+  const candidates = seq.filter(s => counts[s] === minCount);
+  if(candidates.length === 1) return candidates[0];
+  // égalité : on propose celle faite il y a le plus longtemps
+  candidates.sort((a,b) => lastDate[a] - lastDate[b]);
+  return candidates[0];
 }
 function isoWeekStart(d){
   const date = new Date(d);
