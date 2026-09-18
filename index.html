@@ -63,6 +63,10 @@
   .rot-dot.done{background:#2a1f1c; color:#8a6a5c;}
   .rot-dot.next{background:var(--accent); color:#1a0f0a; border-color:var(--accent); transform:scale(1.1);}
   .rot-arrow{color:#4a3630; font-size:12px;}
+  .rot-suggested-dot{
+    position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+    width:5px; height:5px; border-radius:50%; background:var(--accent);
+  }
 
   .manual-toggle{
     text-align:center; font-size:12.5px; color:var(--sub); padding:10px; cursor:pointer; margin-bottom:4px;
@@ -84,9 +88,13 @@
   .session-select{display:flex; gap:8px; margin-bottom:4px;}
   .session-chip{
     flex:1; text-align:center; padding:10px; border-radius:12px; background:var(--card2);
-    color:var(--sub); font-size:13px; font-weight:700; border:1px solid var(--line); cursor:pointer;
+    color:var(--sub); font-size:13px; font-weight:700; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .session-chip.active{border-color:var(--accent); color:var(--accent); background:#241a17;}
+  .sc-label{cursor:pointer; padding:2px 0;}
+  .sc-eye{cursor:pointer; font-size:12px; opacity:.7; padding:2px 4px;}
+  .sc-eye:active{opacity:1;}
 
   .week-strip{display:flex; gap:6px; margin-top:8px;}
   .day-dot{
@@ -356,7 +364,7 @@
   <h1 id="preview-title">Séance A</h1>
   <div class="subtitle" id="preview-sub">Pectoraux horizontal</div>
   <div id="preview-body"></div>
-  <button class="btn btn-primary" onclick="startSession()">▶ Démarrer cette séance</button>
+  <button class="btn btn-primary" onclick="startFromPreview()">▶ Démarrer cette séance</button>
 </div>
 
 <script>
@@ -513,8 +521,12 @@ function suggestedSession(){
     counts[h.session]++;
     if(h.date > lastDate[h.session]) lastDate[h.session] = h.date;
   });
-  const minCount = Math.min(counts.A, counts.B, counts.C);
-  const candidates = seq.filter(s => counts[s] === minCount);
+  // on exclut la dernière séance faite : jamais de répétition immédiate,
+  // même si elle est "en retard" au compteur
+  const last = lastSession();
+  const pool = last ? seq.filter(s => s !== last.session) : seq;
+  const minCount = Math.min(...pool.map(s => counts[s]));
+  const candidates = pool.filter(s => counts[s] === minCount);
   if(candidates.length === 1) return candidates[0];
   // égalité : on propose celle faite il y a le plus longtemps
   candidates.sort((a,b) => lastDate[a] - lastDate[b]);
@@ -542,17 +554,18 @@ function renderHome(){
   document.getElementById('home-next-title').textContent = sess.title;
   document.getElementById('home-next-sub').textContent = sess.sub;
 
-  // bande de rotation A → B → C
+  // bande de rotation A → B → C — reflète TA sélection actuelle, avec un petit repère sur la suggestion si différente
   const suggested = suggestedSession();
   const rotStrip = document.getElementById('rotation-strip');
   const seq = ['A','B','C'];
   const lastDone = lastSession();
   rotStrip.innerHTML = seq.map((s,i)=>{
     let cls = 'rot-dot';
-    if(s === suggested) cls += ' next';
+    if(s === selectedSession) cls += ' next';
     else if(lastDone && s === lastDone.session) cls += ' done';
+    const badge = (s === suggested && s !== selectedSession) ? '<span class="rot-suggested-dot"></span>' : '';
     const arrow = i < seq.length-1 ? '<span class="rot-arrow">→</span>' : '';
-    return `<div class="${cls}">${s}</div>${arrow}`;
+    return `<div class="${cls}" style="position:relative;">${s}${badge}</div>${arrow}`;
   }).join('');
 
   // avertissement si sélection manuelle ≠ suggestion
@@ -581,8 +594,9 @@ function renderHome(){
   ['A','B','C'].forEach(s=>{
     const c = document.createElement('div');
     c.className = 'session-chip' + (s===selectedSession?' active':'');
-    c.textContent = 'Séance ' + s;
-    c.onclick = ()=>{ selectedSession = s; renderHome(); };
+    c.innerHTML = `<span class="sc-label">Séance ${s}</span><span class="sc-eye" title="Voir le détail">👁</span>`;
+    c.querySelector('.sc-label').onclick = ()=>{ selectedSession = s; renderHome(); };
+    c.querySelector('.sc-eye').onclick = (e)=>{ e.stopPropagation(); openPreview(selectedPhase, s); };
     ss.appendChild(c);
   });
 
@@ -706,10 +720,13 @@ function deleteHistoryEntry(idx){
 }
 
 /* ============ APERÇU COMPLET ============ */
-function openPreview(){
-  const data = PROGRAM[selectedPhase][selectedSession];
+let previewPhase = null, previewSessionKey = null;
+function openPreview(phase, sessionKey){
+  previewPhase = phase !== undefined ? phase : selectedPhase;
+  previewSessionKey = sessionKey !== undefined ? sessionKey : selectedSession;
+  const data = PROGRAM[previewPhase][previewSessionKey];
   document.getElementById('preview-title').textContent = data.title;
-  document.getElementById('preview-sub').textContent = data.sub + ' · Phase ' + selectedPhase;
+  document.getElementById('preview-sub').textContent = data.sub + ' · Phase ' + previewPhase;
 
   const body = document.getElementById('preview-body');
   body.innerHTML = data.supersets.map(ss=>{
@@ -736,6 +753,13 @@ function openPreview(){
   }).join('');
 
   showScreen('screen-preview');
+}
+function startFromPreview(){
+  selectedPhase = previewPhase;
+  selectedSession = previewSessionKey;
+  store.phase = previewPhase;
+  saveStore();
+  startSession();
 }
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
