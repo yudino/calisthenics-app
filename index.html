@@ -92,9 +92,6 @@
     display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .session-chip.active{border-color:var(--accent); color:var(--accent); background:#241a17;}
-  .sc-label{cursor:pointer; padding:2px 0;}
-  .sc-eye{cursor:pointer; font-size:12px; opacity:.7; padding:2px 4px;}
-  .sc-eye:active{opacity:1;}
 
   .week-strip{display:flex; gap:6px; margin-top:8px;}
   .day-dot{
@@ -594,9 +591,8 @@ function renderHome(){
   ['A','B','C'].forEach(s=>{
     const c = document.createElement('div');
     c.className = 'session-chip' + (s===selectedSession?' active':'');
-    c.innerHTML = `<span class="sc-label">Séance ${s}</span><span class="sc-eye" title="Voir le détail">👁</span>`;
-    c.querySelector('.sc-label').onclick = ()=>{ selectedSession = s; renderHome(); };
-    c.querySelector('.sc-eye').onclick = (e)=>{ e.stopPropagation(); openPreview(selectedPhase, s); };
+    c.textContent = 'Séance ' + s;
+    c.onclick = ()=>{ selectedSession = s; renderHome(); };
     ss.appendChild(c);
   });
 
