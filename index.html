@@ -341,8 +341,8 @@ const EX = {
     note:'Corps droit, poitrine vers les anneaux, omoplates serrées 1 s en haut.', harder:'Corps plus horizontal, puis pieds surélevés.' },
   pistol:{ name:'Pistol squat assisté (anneaux)', cat:'legs', range:[4,12], start:5, tempo:'3-0-1', loadable:false, perSide:true,
     note:'Tiens les anneaux pour l’équilibre en tirant le moins possible. L’autre jambe tendue devant.', harder:'Moins d’aide des bras, puis sans anneaux.' },
-  leg_curl:{ name:'Leg curl aux anneaux', cat:'legs', range:[6,15], start:8, tempo:'2-0-3', loadable:false,
-    note:'Sur le dos, talons dans les anneaux à 20 cm du sol, hanches levées : ramène les talons vers les fesses. Remplace le nordic curl sans support.', harder:'Garde les hanches hautes tout le long, puis sur une jambe.' },
+  rdl:{ name:'Soulevé de terre roumain (élastique ou sac)', cat:'legs', range:[8,15], start:10, tempo:'3-1-1', loadable:true,
+    note:'Élastique sous les pieds ou sac tenu devant toi. Genoux légèrement fléchis, dos plat : recule les fesses jusqu’à sentir l’étirement des ischios, pause 1 s, puis remonte en serrant les fessiers.', harder:'Élastique plus fort ou sac plus lourd, puis sur une jambe.' },
   squat:{ name:'Squat lesté (sac ou élastique)', cat:'legs', range:[8,15], start:12, tempo:'3-0-1', loadable:true,
     note:'Sac sur le dos ou élastique sous les pieds. Les 2 jambes, descends sous la parallèle.', harder:'Ajoute du poids ou prends un élastique plus fort.' },
   mollets:{ name:'Élévations de mollets', cat:'legs', range:[10,20], start:12, tempo:'2-1-2', loadable:true,
@@ -362,7 +362,7 @@ const SESSIONS = {
     ]},
   L:{ short:'Bas', title:'Bas du corps', sub:'Cuisses, ischios, fessiers, mollets',
     blocks:[
-      { rest:45, items:[['pistol',3],['leg_curl',3]] },
+      { rest:45, items:[['pistol',3],['rdl',3]] },
       { rest:45, items:[['squat',3],['mollets',3]] },
       { rest:60, items:[['hip_thrust',2]] }
     ]},
@@ -370,10 +370,16 @@ const SESSIONS = {
     blocks:[
       { rest:45, items:[['pompes_deficit',3],['tractions',3]] },
       { rest:45, items:[['dips',3],['squat',3]] },
-      { rest:45, items:[['leg_curl',2],['mollets',2]] }
+      { rest:45, items:[['rdl',2],['mollets',2]] }
+    ]},
+  D:{ short:'Dos', title:'Dos et mollets', sub:'Sans pecs, pour les laisser récupérer',
+    blocks:[
+      { rest:45, items:[['tractions',3],['mollets',3]] },
+      { rest:45, items:[['ring_rows',3],['chinups',2]] }
     ]}
 };
-const TEMPLATES = { 3:['H','L','F'], 4:['H','L','H','F'], 5:['H','L','F','H','L'] };
+// Pecs (Haut + Full) 2 fois par semaine quelle que soit la fréquence
+const TEMPLATES = { 3:['H','L','F'], 4:['H','L','F','L'], 5:['H','L','F','D','L'] };
 const CAT_LABEL = { push:'POUSSER', pull:'TIRER', legs:'JAMBES' };
 
 /* ============ STOCKAGE ============ */
