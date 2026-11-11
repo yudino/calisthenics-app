@@ -189,6 +189,9 @@
   .history-dur{font-size:13px; font-weight:700; color:var(--sub);}
   .history-del{flex:0 0 30px; height:30px; border-radius:8px; background:var(--card2); border:1px solid var(--line); color:var(--sub); font-size:13px; cursor:pointer;}
   .empty{text-align:center; color:var(--sub); font-size:13px; padding:30px 0;}
+  .backup-row{display:flex; gap:8px; margin-bottom:12px;}
+  .backup-row .btn{padding:11px; font-size:13.5px;}
+  .version-tag{text-align:center; font-size:11px; color:var(--sub); margin-top:14px;}
 
   .method-box{background:var(--card2); border-radius:12px; padding:10px 12px; font-size:12.5px; color:var(--sub); line-height:1.5; margin-bottom:12px;}
   .method-box b{color:var(--text);}
@@ -267,6 +270,7 @@
   <div class="install-box">
     📲 <b>Installer sur le téléphone :</b> ouvre la page dans Chrome ou Safari, puis menu → « Ajouter à l’écran d’accueil ». Tes données restent sur ton téléphone.
   </div>
+  <div class="version-tag" id="version-tag"></div>
 </div>
 
 <!-- ============ SÉANCE ============ -->
@@ -307,6 +311,11 @@
   <button class="back-btn" onclick="goHome()">‹ Retour</button>
   <h1>Historique</h1>
   <div class="subtitle">Toutes tes séances enregistrées</div>
+  <div class="backup-row">
+    <button class="btn btn-secondary" onclick="exportData()">⬇ Exporter</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⬆ Importer</button>
+    <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importData(this)">
+  </div>
   <div id="history-list"></div>
 </div>
 
@@ -323,6 +332,8 @@
 </div>
 
 <script>
+const APP_VERSION = 'v3 · 11 nov. 2026';
+
 /* ============ EXERCICES ============ */
 const EX = {
   pompes_lestees:{ name:'Pompes lestées (sac à dos)', cat:'push', range:[6,15], start:8, tempo:'2-0-1', loadable:true,
@@ -632,6 +643,39 @@ function openHistory(){
   }
   showScreen('screen-history');
 }
+function exportData(){
+  const data = { app:'pecs20', version:APP_VERSION, exportedAt:new Date().toISOString(),
+    history:store.history, exLog:store.exLog, frequency:store.frequency };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pecs20-sauvegarde-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function importData(input){
+  const file = input.files && input.files[0];
+  input.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(data.app !== 'pecs20' || !Array.isArray(data.history)) throw new Error('format');
+      if(!confirm(`Remplacer ton historique actuel (${store.history.length} séances) par la sauvegarde (${data.history.length} séances) ?`)) return;
+      store.history = data.history;
+      store.exLog = data.exLog || {};
+      if([3,4,5].includes(data.frequency)) store.frequency = data.frequency;
+      saveStore();
+      openHistory();
+    }catch(e){
+      alert('Ce fichier n’est pas une sauvegarde Pecs 20min valide.');
+    }
+  };
+  reader.readAsText(file);
+}
 function deleteHistoryEntry(idx){
   if(!confirm('Supprimer cette séance de l’historique ?')) return;
   store.history.splice(idx, 1);
@@ -819,6 +863,7 @@ function finishSession(){
 
 /* ============ DÉMARRAGE ============ */
 applyTheme();
+document.getElementById('version-tag').textContent = 'Version ' + APP_VERSION;
 renderHome();
 if(store.active) resumeSession();
 
