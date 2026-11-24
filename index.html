@@ -332,7 +332,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v3 · 11 nov. 2026';
+const APP_VERSION = 'v4 · 24 nov. 2026';
 
 /* ============ EXERCICES ============ */
 const EX = {
@@ -364,33 +364,36 @@ const EX = {
 
 /* ============ SÉANCES ============ */
 const SESSIONS = {
-  H:{ short:'Haut', title:'Haut du corps', sub:'Pecs avec la méthode +1 rep, dos solide',
+  P:{ short:'Pecs', title:'Pecs', sub:'Le programme de la vidéo, séries simples, 2 min de repos',
     blocks:[
-      { rest:45, items:[['pompes_lestees',2],['tractions',2]] },
-      { rest:45, items:[['pompes_deficit',3],['ring_rows',3]] },
-      { rest:45, items:[['pompes_pieds',2],['chinups',2]] },
-      { rest:90, items:[['dips',2]] }
+      { rest:120, items:[['pompes_lestees',2]] },
+      { rest:120, items:[['pompes_deficit',3]] },
+      { rest:120, items:[['pompes_pieds',2]] },
+      { rest:120, items:[['dips',2]] }
     ]},
-  L:{ short:'Bas', title:'Bas du corps', sub:'Cuisses, ischios, fessiers, mollets',
+  T:{ short:'Dos+Jambes', title:'Tirage et jambes', sub:'Dos en alternance avec les jambes, sans pecs',
+    blocks:[
+      { rest:45, items:[['tractions',3],['squat',3]] },
+      { rest:45, items:[['ring_rows',3],['rdl',3]] },
+      { rest:45, items:[['chinups',2],['mollets',2]] }
+    ]},
+  F:{ short:'Full', title:'Full body', sub:'Pecs avec jambes, puis dos avec mollets',
+    blocks:[
+      { rest:45, items:[['pompes_lestees',3],['squat',3]] },
+      { rest:45, items:[['dips',3],['rdl',3]] },
+      { rest:45, items:[['tractions',3],['mollets',2]] }
+    ]},
+  L:{ short:'Jambes', title:'Jambes', sub:'Cuisses, ischios, fessiers, mollets',
     blocks:[
       { rest:45, items:[['pistol',3],['rdl',3]] },
       { rest:45, items:[['squat',3],['mollets',3]] },
       { rest:60, items:[['hip_thrust',2]] }
-    ]},
-  F:{ short:'Full', title:'Full body', sub:'Pecs, dos et jambes dans la même séance',
-    blocks:[
-      { rest:45, items:[['pompes_deficit',3],['tractions',3]] },
-      { rest:45, items:[['dips',3],['squat',3]] },
-      { rest:45, items:[['rdl',2],['mollets',2]] }
-    ]},
-  D:{ short:'Dos', title:'Dos et mollets', sub:'Sans pecs, pour les laisser récupérer',
-    blocks:[
-      { rest:45, items:[['tractions',3],['mollets',3]] },
-      { rest:45, items:[['ring_rows',3],['chinups',2]] }
     ]}
 };
-// Pecs (Haut + Full) 2 fois par semaine quelle que soit la fréquence
-const TEMPLATES = { 3:['H','L','F'], 4:['H','L','F','L'], 5:['H','L','F','D','L'] };
+// Les pecs ne sont jamais associés au dos. Pecs (P + F) 2 fois par semaine quelle que soit la fréquence.
+const TEMPLATES = { 3:['P','T','F'], 4:['P','T','F','L'], 5:['P','T','F','L','T'] };
+// Anciennes séances, pour l'historique
+const LEGACY = { H:'Haut du corps', D:'Dos et mollets', A:'Ancien programme, séance A', B:'Ancien programme, séance B', C:'Ancien programme, séance C' };
 const CAT_LABEL = { push:'POUSSER', pull:'TIRER', legs:'JAMBES' };
 
 /* ============ STOCKAGE ============ */
@@ -622,7 +625,7 @@ function openPreview(key){
 function startFromPreview(){ selectedSession = previewKey; startSession(); }
 
 /* ============ HISTORIQUE ============ */
-function sessionLabel(k){ return SESSIONS[k] ? SESSIONS[k].title : `Ancien programme, séance ${k}`; }
+function sessionLabel(k){ return SESSIONS[k] ? SESSIONS[k].title : (LEGACY[k] || `Ancien programme, séance ${k}`); }
 function sessionShort(k){ return SESSIONS[k] ? SESSIONS[k].short : k; }
 function openHistory(){
   const list = document.getElementById('history-list');
